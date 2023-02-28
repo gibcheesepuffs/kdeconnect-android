@@ -3,11 +3,13 @@ package org.kde.kdeconnect.Plugins.SftpPlugin;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.storage.StorageManager;
 import android.provider.DocumentsContract;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -19,6 +21,7 @@ import android.view.View;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.content.ContextCompat;
@@ -31,6 +34,8 @@ import org.json.JSONObject;
 import org.kde.kdeconnect.Helpers.StorageHelper;
 import org.kde.kdeconnect_tp.R;
 import org.kde.kdeconnect_tp.databinding.FragmentStoragePreferenceDialogBinding;
+
+import java.io.File;
 
 public class StoragePreferenceDialogFragment extends PreferenceDialogFragmentCompat implements TextWatcher {
     private static final int REQUEST_CODE_DOCUMENT_TREE = 1001;
@@ -104,6 +109,7 @@ public class StoragePreferenceDialogFragment extends PreferenceDialogFragmentCom
         return dialog;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     protected void onBindDialogView(View view) {
         super.onBindDialogView(view);
@@ -111,9 +117,24 @@ public class StoragePreferenceDialogFragment extends PreferenceDialogFragmentCom
         binding = FragmentStoragePreferenceDialogBinding.bind(view);
 
         binding.storageLocation.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            StorageManager storageManager = (StorageManager) requireContext().getSystemService(Context.STORAGE_SERVICE);
+            File mountPoint = storageManager.getPrimaryStorageVolume().getDirectory();
+
+            String displayName = getResources().getString(R.string.sftp_primary_storage);
+            storageInfo = new SftpPlugin.StorageInfo(displayName, Uri.fromFile(mountPoint));
+
+            binding.storageLocation.setText(displayName);
+            TextViewCompat.setCompoundDrawablesRelative(binding.storageLocation, null, null, null, null);
+            binding.storageLocation.setError(null);
+            binding.storageLocation.setEnabled(false);
+
+            // TODO: Show name as used in android's picker app but I don't think it's possible to get that, everything I tried throws PermissionDeniedException
+            binding.storageDisplayName.setText(displayName);
+            binding.storageDisplayName.setEnabled(true);
+            //Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+
             //For API >= 26 we can also set Extra: DocumentsContract.EXTRA_INITIAL_URI
-            startActivityForResult(intent, REQUEST_CODE_DOCUMENT_TREE);
+            //startActivityForResult(intent, REQUEST_CODE_DOCUMENT_TREE);
         });
 
         binding.storageDisplayName.setFilters(new InputFilter[]{new FileSeparatorCharFilter()});

@@ -7,7 +7,11 @@
 package org.kde.kdeconnect.UserInterface;
 
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 
 import androidx.annotation.Nullable;
 
@@ -39,11 +43,20 @@ public class DeviceSettingsAlertDialogFragment extends AlertDialogFragment {
         setCallback(new Callback() {
             @Override
             public void onPositiveButtonClicked() {
-                Intent intent = new Intent(requireActivity(), PluginSettingsActivity.class);
 
-                intent.putExtra(PluginSettingsActivity.EXTRA_DEVICE_ID, deviceId);
-                intent.putExtra(PluginSettingsActivity.EXTRA_PLUGIN_KEY, pluginKey);
-                requireActivity().startActivity(intent);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    if (Environment.isExternalStorageManager()) {
+                        Intent intent = new Intent(requireActivity(), PluginSettingsActivity.class);
+                        intent.putExtra(PluginSettingsActivity.EXTRA_DEVICE_ID, deviceId);
+                        intent.putExtra(PluginSettingsActivity.EXTRA_PLUGIN_KEY, pluginKey);
+                        requireActivity().startActivity(intent);
+                    } else {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                        Uri uri = Uri.fromParts("package", getContext().getPackageName(), null);
+                        intent.setData(uri);
+                        getContext().startActivity(intent);
+                    }
+                }
             }
         });
     }

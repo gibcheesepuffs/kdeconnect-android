@@ -385,7 +385,7 @@ public class SftpSettingsFragment
 
         handleChangedStorageInfoList();
 
-        requireContext().getContentResolver().takePersistableUriPermission(storageInfo.uri, takeFlags);
+        //requireContext().getContentResolver().takePersistableUriPermission(storageInfo.uri, takeFlags);
     }
 
     private void handleChangedStorageInfoList() {
